@@ -9,7 +9,8 @@ try{
     return 1;
 }
 //debug mode, headless shows chrome and saves screenshots
-headless = true;
+const headless = true;
+const screenshot = true;
 
 
 
@@ -17,7 +18,7 @@ headless = true;
 
 
 //So screenshots are sequentially added
-screenShotIndex = 0;
+let screenShotIndex = 0;
 
 (async () => {
     const browser = await puppeteer.launch({
@@ -33,18 +34,18 @@ screenShotIndex = 0;
 
     await page.type("#name", creds.name);
     await page.type("#code", creds.code);
-    screenShot(page);
+        await screenShot(page);
 
     //Annoying xpath for the submit button
     await page.click("#pverifyWeb > form > table > tbody > tr:nth-child(6) > td > div > a")
 
     await page.waitFor(".patNameAddress", {timeout: 10000});
-    screenShot(page);
+        await screenShot(page);
 
     await page.click("#patButChkouts>a")
 
     await page.waitFor(".patFuncTitle", {timeout: 10000});
-    screenShot(page);
+        await screenShot(page);
 
     pageRet = await page.evaluate(function (){
         var retStr = ""
@@ -83,7 +84,8 @@ screenShotIndex = 0;
     console.log(pageRet);
     console.log("=================")
 
-    screenShot(page);
+
+        await screenShot(page);
 
     if(pageRet == ""){
         //Nothing to do
@@ -118,7 +120,10 @@ screenShotIndex = 0;
 })();
 
 async function screenShot(page){
-    if(!headless){
-        return page.screenshot({path: (screenShotIndex++)+".png", fullPage: true});
+    if(screenshot){
+        screenShotIndex++;
+        console.log("screenShotting: "+screenShotIndex);
+        return page.screenshot({path: (screenShotIndex)+".png", fullPage: true});
+    }
     }
 }
