@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-//Needs to be in global namespace not try catch namespace
+const fs = require("fs");
 let creds;
 try{
     creds = require('./creds');
@@ -107,6 +107,12 @@ screenShotIndex = 0;
     if(headless == true){
         await page.close();
         await browser.close();
+        fs.writeFile("cron.output", pageRet, "utf8", function(err){
+            if(err){
+                console.log("Error writing file");
+                console.log(err)
+            }
+        })
     }
     console.log("done")
 })();
