@@ -1,6 +1,15 @@
 const puppeteer = require('puppeteer');
 const fs = require("fs");
+
+/* NOTE: 
+ * Sometimes if an await fails, it hangs because the browser is still
+ * open. I tried to stop this but, if you're using cron, **USE `timeout` TO
+ * MAKE SURE EXITS.** You don't want cron jobs hanging silently
+ */
+
+//Needs to be in global namespace so can be used in try catch namespace
 let creds;
+let browser, page;
 try{
     creds = require('./creds');
     console.log(creds)
@@ -20,15 +29,16 @@ const screenshot = true;
 //So screenshots are sequentially added
 let screenShotIndex = 0;
 
-(async () => {
-    const browser = await puppeteer.launch({
+async function run(){
+    try{
+        browser = await puppeteer.launch({
         headless: headless,
         //https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
         //Not recommended b/ Paul Irish does it so...
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
-    const page = await browser.newPage();
+        page = await browser.newPage();
 
     await page.goto('https://tripodclassic.brynmawr.edu/patroninfo/');
 
@@ -80,9 +90,6 @@ let screenShotIndex = 0;
         return retStr;
         //submitCheckout( 'requestRenewSome', 'requestRenewSome'  )
     })
-    console.log("=================")
-    console.log(pageRet);
-    console.log("=================")
 
 
         await screenShot(page);
@@ -90,35 +97,57 @@ let screenShotIndex = 0;
     if(pageRet == ""){
         //Nothing to do
         console.log("All books are good")
+            pageRet = "!!Nothing To Do!!";
     }else{
         //Click Renew Marked buttonk
         //await page.click("#checkout_form > a:nth-child(5)");
-        pageRet = await page.evaluate(function (){
+            await page.evaluate(function (){
             submitCheckout( 'requestRenewSome', 'requestRenewSome'  )
         });
         await page.waitFor(".confirmationprompt", {timeout: 10000});
 
         //Click the Yes button for proceeding
         //await page.click("#checkout_form > a:nth-child(3)");
-        pageRet = await page.evaluate(function (){
+            await page.evaluate(function (){
             submitCheckout( 'renewsome', 'renewsome')
         });
     }
 
-
-    if(headless == true){
+        if(headless){
         await page.close();
         await browser.close();
+        }
+        console.log("done");
+
+        console.log("=================")
+        console.log(pageRet);
+        console.log("=================")
+
         fs.writeFile("cron.output", pageRet, "utf8", function(err){
             if(err){
                 console.log("Error writing file");
                 console.log(err)
             }
         })
+    }catch(e){
+        console.log("bigE: "+e)
+        try{
+            await page.close();
+            await browser.close();
+        }catch(littleE){
+            console.log(littleE)
+            console.log("Can't even close page/browser on error...Force exiting")
+            process.exit(1);
     }
-    console.log("done")
-})();
+        return await new Error(e);
+    }
+};
 
+async function throws(e){
+    await page.close();
+    await browser.close();
+    throw new Error(e)
+}
 async function screenShot(page){
     if(screenshot){
         screenShotIndex++;
@@ -126,4 +155,8 @@ async function screenShot(page){
         return page.screenshot({path: (screenShotIndex)+".png", fullPage: true});
     }
     }
+run().catch(function (e){
+    if(e){
+        console.log(e)
 }
+})
