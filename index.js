@@ -14,12 +14,12 @@ try{
     creds = require('./creds');
     console.log(creds)
 }catch(e){
-    console.log("Need tripid credentials. Check creds.js.example")
+    console.log("Need tripod credentials. Check creds.js.example")
     return 1;
 }
 //debug mode, headless shows chrome and saves screenshots
 const headless = true;
-const screenshot = true;
+const screenshot = false;
 
 
 
