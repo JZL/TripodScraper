@@ -1,0 +1,4 @@
+module.exports = {
+    name: "<NAME                HERE>",
+    code: "<LIBRARY CARD NUMBER HERE>"
+}
