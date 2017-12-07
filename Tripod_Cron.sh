@@ -20,4 +20,5 @@ grep -v "!!Nothing To Do!!" cron.output
 #    cat cron.output
 #fi
 
-echo aa > cron.test
+#For testing `watch` to verify is running
+echo aa >> cron.test
