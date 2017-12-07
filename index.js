@@ -35,7 +35,7 @@ async function run(){
             headless: headless,
             //https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md
             //Not recommended b/ Paul Irish does it so...
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            //args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
         page = await browser.newPage();
@@ -48,69 +48,91 @@ async function run(){
 
         //Annoying xpath for the submit button
         await page.click("#pverifyWeb > form > table > tbody > tr:nth-child(6) > td > div > a")
+        console.log("clicked")
 
-        await page.waitFor(".patNameAddress", {timeout: 10000});
+        await page.waitFor(".patNameAddress", {timeout: 30000});
+        console.log("(1) Got past login");
         await screenShot(page);
 
         await page.click("#patButChkouts>a")
-
-        await page.waitFor(".patFuncTitle", {timeout: 10000});
+        console.log("clicked")
+        
+        await page.waitFor(".patFuncTitle", {timeout: 30000});
+        console.log("(2) Got to loans");
         await screenShot(page);
 
         pageRet = await page.evaluate(function (){
-            var retStr = ""
+            //need pressSubmit? because can be overdue but already have 2
+            //renewals so can't do anything about it
+
+            var ret = [false, ""] //[pressSubmit?, output str]
             var rows = document.querySelectorAll("#patfunc_main>tbody>tr.patFuncEntry")
             var todayT = (new Date()).setHours(0,0,0,0)
             //Set reminder day for 3 days ago
             var daysAgo = new Date(todayT)
-            daysAgo.setDate(daysAgo.getDate() - 3)
+            daysAgo.setDate(daysAgo.getDate() + 10)
 
             for(var i = 0; i<rows.length;i++){
                 //dayString
                 var dS = rows[i].children[3].childNodes[0].wholeText.replace(" DUE ", "").replace(/\s*$/, "").split("-")
                 var d = new Date("20"+dS[2], parseInt(dS[0])-1, dS[1])
                 if(d.getTime() <= daysAgo.getTime()){
-                    retStr+=rows[i].children[1].innerText.replace(/\s*$/, "")+" needs to be renewed"+"\n";
+                    ret[1]+=rows[i].children[1].innerText.replace(/\s*$/, "")+" needs to be renewed"+"\n";
 
                     if(d.getTime() == todayT){
-                        retStr+="    Due Today!"+"\n";
-
+                        ret[1]+="    Due Today!"+"\n";
                     }else if(d.getTime() <= todayT){
-                        retStr+="    OVERDUE"+"\n";
+                        ret[1]+="    OVERDUE"+"\n";
                     }
 
                     if(rows[i].children[3].children.length >=1 && rows[i].children[3].children[0].innerText == "Renewed 2 times"){
-                        retStr+="    CAN'T BE RENEWED, TOO MANY RENEWALS"+"\n";
+                        ret[1]+="    CAN'T BE RENEWED, TOO MANY RENEWALS"+"\n";
                     }else{
                         rows[i].children[0].children[0].click()
-                        retStr+="    Renewing...Nice"+"\n";
+                        ret[0] = true;
+                        ret[1]+="    Renewing...Nice"+"\n";
                     }
                 }
             }
-            return retStr;
+            return ret;
             //submitCheckout( 'requestRenewSome', 'requestRenewSome'  )
         })
 
 
+        console.log("=================")
+        console.log("Pressing renew? "+pageRet[0])
+        console.log("-----------------")
+        console.log(pageRet[1]);
+        console.log("=================")
+
         await screenShot(page);
 
-        if(pageRet == ""){
+        if(pageRet[0] == false){
             //Nothing to do
-            console.log("All books are good")
-            pageRet = "!!Nothing To Do!!";
+            console.log("No books can be renewed")
+            if(pageRet[1] == ""){
+                 pageRet[1] = "!!Nothing To Do!!";
+            }
         }else{
             //Click Renew Marked buttonk
             //await page.click("#checkout_form > a:nth-child(5)");
             await page.evaluate(function (){
                 submitCheckout( 'requestRenewSome', 'requestRenewSome'  )
             });
-            await page.waitFor(".confirmationprompt", {timeout: 10000});
+            console.log("Sumbitted checkout")
+            await screenShot(page);
+            console.log("done screenshot")
+            await page.waitFor(".confirmationprompt", {timeout: 30000});
+            console.log("(3) Got past sumbitting checkout")
 
             //Click the Yes button for proceeding
             //await page.click("#checkout_form > a:nth-child(3)");
+            console.log("Sumbitted checkout")
             await page.evaluate(function (){
                 submitCheckout( 'renewsome', 'renewsome')
             });
+            await page.waitFor(".patFuncTitle", {timeout: 30000});
+            console.log("(4) Got back to loans");
         }
 
         if(headless){
@@ -119,11 +141,8 @@ async function run(){
         }
         console.log("done");
 
-        console.log("=================")
-        console.log(pageRet);
-        console.log("=================")
 
-        fs.writeFile("cron.output", pageRet, "utf8", function(err){
+        fs.writeFile("cron.output", pageRet[1], "utf8", function(err){
             if(err){
                 console.log("Error writing file");
                 console.log(err)
@@ -153,6 +172,9 @@ async function screenShot(page){
         screenShotIndex++;
         console.log("screenShotting: "+screenShotIndex);
         return page.screenshot({path: (screenShotIndex)+".png", fullPage: true});
+    }else{
+        //Doesn't do anything b needs to return
+        return false;
     }
 }
 run().catch(function (e){
