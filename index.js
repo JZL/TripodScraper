@@ -77,7 +77,7 @@ async function run(){
                 var dS = rows[i].children[3].childNodes[0].wholeText.replace(" DUE ", "").replace(/\s*$/, "").split("-")
                 var d = new Date("20"+dS[2], parseInt(dS[0])-1, dS[1])
                 if(d.getTime() <= daysAgo.getTime()){
-                    ret[1]+=rows[i].children[1].innerText.replace(/\s*$/, "")+" needs to be renewed"+"\n";
+                    ret[1]+=rows[i].children[1].innerText.replace(/\s*$/, "")+" needs to be renewed. Due: in "+ ((todayT - d.getTime())/(24*60*60*1000)) +" days (" + d.toDateString()+")\n";
 
                     if(d.getTime() == todayT){
                         ret[1]+="    Due Today!"+"\n";
