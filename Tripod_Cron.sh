@@ -1,6 +1,6 @@
 #!/bin/bash
 #For Heron, need nodejs path bc need recent version
-cd ~/TripodScraper/TripodScraper/
+cd ~/CRON/TripodScraper/
 # TODO: If really fails, doesn't kill browser
 #ps aux|grep jzl|grep chrom|less -S|awk '{print $2}'|xargs kill
 
@@ -21,4 +21,4 @@ grep -v "!!Nothing To Do!!" cron.output
 #fi
 
 #For testing `watch` to verify is running
-echo aa >> cron.test
+date >> cron.test
