@@ -70,7 +70,7 @@ async function run(){
             var todayT = (new Date()).setHours(0,0,0,0)
             //Set reminder day for 3 days ago
             var daysAgo = new Date(todayT)
-            daysAgo.setDate(daysAgo.getDate() + 10)
+            daysAgo.setDate(daysAgo.getDate() + 3)
 
             for(var i = 0; i<rows.length;i++){
                 //dayString
