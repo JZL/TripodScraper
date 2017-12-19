@@ -2,3 +2,4 @@ creds.js
 *.png
 node_modules
 cron.output
+cron.test
