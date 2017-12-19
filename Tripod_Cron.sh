@@ -15,6 +15,11 @@ fi
 ps aux|grep chrom|grep TripodScraper
 grep -v "!!Nothing To Do!!" cron.output
 
+# Clear cron output after done because is misleading when debugging but want to
+# keep around
+
+echo "INVALID" > cron.output
+
 #if grep --quiet "Nothing To Do" cron.output; then
 #    echo exists
 #    cat cron.output
