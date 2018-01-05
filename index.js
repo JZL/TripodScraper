@@ -73,8 +73,12 @@ async function run(){
             daysAgo.setDate(daysAgo.getDate() + 3)
 
             for(var i = 0; i<rows.length;i++){
-                //dayString
-                var dS = rows[i].children[3].childNodes[0].wholeText.replace(" DUE ", "").replace(/\s*$/, "").split("-")
+				var dueString = rows[i].children[3].childNodes[0].wholeText.replace(" DUE ", "")
+
+				//Remove " +1 RECALLED" for if RECALLED
+				var dS = dueString.replace(/ \+.*/, "")
+								  .replace(/\s*$/, "").split("-")
+
                 var d = new Date("20"+dS[2], parseInt(dS[0])-1, dS[1])
                 if(d.getTime() <= daysAgo.getTime()){
                     ret[1]+=rows[i].children[1].innerText.replace(/\s*$/, "")+" needs to be renewed. Due: in "+ ((d.getTime() - todayT))/(24*60*60*1000) +" days (" + d.toDateString()+")\n";
@@ -84,9 +88,10 @@ async function run(){
                     }else if(d.getTime() <= todayT){
                         ret[1]+="    OVERDUE"+"\n";
                     }
-
-                    if(rows[i].children[3].children.length >=1 && rows[i].children[3].children[0].innerText == "Renewed 2 times"){
-                        ret[1]+="    CAN'T BE RENEWED, TOO MANY RENEWALS"+"\n";
+					if (dueString.includes("RECALLED")) {
+						ret[1] += "\tIS RECALLED, RETURN IMMEDIATELY $2 FINE!!! PER DAY!!!\n"
+					} else if (rows[i].children[3].children.length >= 1 && rows[i].children[3].children[0].innerText == "Renewed 2 times") {
+						ret[1] += "\tCAN'T BE RENEWED, TOO MANY RENEWALS\n";
                     }else{
                         rows[i].children[0].children[0].click()
                         ret[0] = true;
